@@ -58,7 +58,19 @@ This repository reimplements the core method from **“Auto-generating Virtual H
 
 The original institute code and 1,200-sentence room dataset are unavailable. This independent implementation provides the paper's essential shared BERT backbone, sentence conversation/action head, three token-level entity heads, joint loss, and grounded action dispatch. It does not include the paper's model weights, participant data, Unity room, animations, speech services, or reported study results.
 
-### Setup
+### Immediate browser demo
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+python scripts/prepare_viewer.py
+python -m context_behavior.demo
+```
+
+Open `http://127.0.0.1:8762`. The default room uses authored phrase rules and a procedural character; trained BERT inference uses the checkpoint workflow below.
+
+### Detailed setup and checks
 
 ```powershell
 py -3.11 -m venv .venv
@@ -70,9 +82,9 @@ pytest -q
 
 The first training run downloads the selected Hugging Face backbone. See the official [BERT model documentation](https://huggingface.co/docs/transformers/model_doc/bert) and [token-classification guide](https://huggingface.co/docs/transformers/main/tasks/token_classification).
 
-### Synthetic quickstart
+### Procedural verification
 
-Run `python scripts/smoke.py` after installation. It saves a small local BERT/tokenizer, trains the normal JSONL pipeline for two CPU epochs, reloads the checkpoint through the inference CLI, and validates the prediction/dispatch output schema. Because randomly initialized weights are not expected to be accurate, a separate known-valid parse checks scene grounding deterministically. Inspect the dataset, checkpoint, prediction, and grounded result under `outputs/smoke/`. For real data, keep the same JSONL and scene contracts below and replace the local backbone and training records.
+Run `python scripts/verify.py` after installation. It saves a small local BERT/tokenizer, trains the normal JSONL pipeline for two CPU epochs, reloads the checkpoint through the inference CLI, and validates the prediction/dispatch output schema. Because randomly initialized weights are not expected to be accurate, a separate known-valid parse checks scene grounding deterministically. Inspect the dataset, checkpoint, prediction, and grounded result under `outputs/verify/`. For real data, keep the same JSONL and scene contracts below and replace the local backbone and training records.
 
 ### Prepare domain data
 
@@ -119,3 +131,13 @@ context-behavior-infer --model .\artifacts\room-model --scene .\scene.json "Plea
 ```
 
 Inference reports the predicted intent/entities and a dispatch decision. The dispatcher refuses missing entities, unknown targets, and unsupported affordances. A host application should route accepted commands to its animation controller and conversation intents to its chosen dialogue system.
+
+### Local 3D room
+
+Run `python scripts/prepare_viewer.py` once to fetch a pinned Three.js module into ignored `static/vendor/`. Start `python -m context_behavior.demo` and open `http://127.0.0.1:8762`. The default interpreter is **explicit authored phrase rules** over `demo/scene.json`; the interface labels it that way and never presents it as a trained model. For shared BERT intent/entity inference, train with the JSONL workflow above and start `python -m context_behavior.demo --model artifacts/room-model`. The room changes only when `ActionDispatcher` accepts an action, and every object exposes its current state and affordances. The procedural character is an integration renderer; the paper's Unity character is not distributed.
+
+`python scripts/verify.py` trains a tiny randomly initialized BERT checkpoint to check pipeline wiring; its predictions are not accuracy evidence. Use reviewed scene-specific training and held-out validation data before relying on model output. The wearable MR agent paper is the framework lineage for this work, not a runtime dependency of this standalone repository.
+
+### Optional local speech
+
+Browser speech is selected by default. To enable **Local Kokoro** and audio transcription, install `python -m pip install -e ".[speech]"`. Set `KOKORO_MODEL_DIR` to a user-prepared folder containing `config.json`, `kokoro-v1_0.pth`, and `voices/af_heart.pt` from [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M). Follow the [Kokoro phonemizer setup](https://github.com/hexgrad/kokoro), including espeak-ng where needed. Set `WHISPER_MODEL_DIR` to a locally prepared faster-whisper small model directory containing `model.bin`. In PowerShell, set `$env:KOKORO_MODEL_DIR='C:\path\to\kokoro'` and `$env:WHISPER_MODEL_DIR='C:\path\to\whisper-small'` before starting the room. Record or upload audio to fill the utterance field; action routing still passes through the scene-affordance checks. Missing paths produce explicit errors and never trigger model downloads.

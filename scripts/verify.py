@@ -28,7 +28,7 @@ def entity(text: str, value: str, kind: str) -> dict:
 
 
 def main():
-    root = Path("outputs/smoke").resolve(); root.mkdir(parents=True, exist_ok=True)
+    root = Path("outputs/verify").resolve(); root.mkdir(parents=True, exist_ok=True)
     backbone = root / "tiny-backbone"; backbone.mkdir(exist_ok=True)
     vocab = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "please", "open", "close",
              "the", "drawer", "hello", "there", "how", "are", "you"]
@@ -66,7 +66,7 @@ def main():
     known = ActionDispatcher.load(scene).dispatch("action", {"action": "open", "target": "drawer"})
     assert known.accepted and known.command == {"actor": "virtual_human", "action": "open", "target": "drawer"}
     (root / "known-valid-dispatch.json").write_text(json.dumps(asdict(known), indent=2), encoding="utf-8")
-    print(f"smoke passed: two training epochs, checkpoint reload, prediction schema, and grounded dispatch -> {root}")
+    print(f"verification passed: two training epochs, checkpoint reload, prediction schema, and grounded dispatch -> {root}")
 
 
 if __name__ == "__main__":
