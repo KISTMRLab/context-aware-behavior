@@ -1,0 +1,17 @@
+title: "Context-aware behavior"
+description: "Natural-language context activates grounded virtual-human actions."
+markdown: kramdown
+kramdown:
+  input: GFM
+exclude:
+  - src
+  - tests
+  - .venv
+  - data
+  - runs
+  - outputs
+  - checkpoints
+  - pyproject.toml
+  - requirements.txt
+  - package.json
+  - package-lock.json

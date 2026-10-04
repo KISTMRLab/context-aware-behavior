@@ -1,0 +1,9 @@
+{
+  "file": "method.png",
+  "kind": "original-paper-figure",
+  "source_pdf": "context-aware-behavior.pdf",
+  "page": 2,
+  "figure": 2,
+  "alt": "Method diagram from Figure 2 of the context-aware-behavior paper",
+  "caption": "Original method figure from the paper: Figure 2, PDF page 2. Extracted for this research introduction; the diagram describes the original system, not verification of this reimplementation."
+}
