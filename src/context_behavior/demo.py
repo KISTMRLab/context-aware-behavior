@@ -6,6 +6,7 @@ import json
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from .avatar_http import serve_avatar_asset
 
 from .dispatcher import ActionDispatcher
 from .speech_backend import SpeechBackend, speech_route
@@ -46,6 +47,7 @@ def app(scene: dict, model: Path | None):
             self.wfile.write(body)
 
         def do_GET(self):
+            if serve_avatar_asset(self, Path(__file__).resolve().parents[2] / "static"): return
             if self.path == "/api/scene":
                 self.send_json({"scene": scene, "states": states, "backend": "trained BERT checkpoint" if model else "explicit authored rules"})
             elif self.path == "/api/speech":

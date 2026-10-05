@@ -25,3 +25,6 @@ This project reimplements the paper's learning and behavior boundary with curren
 - Dispatcher tests demonstrate allowed, missing-entity, unknown-target, and unsupported-affordance paths.
 - Source files compile without downloading a backbone; training/inference are documented but not run in verification.
 
+## Bundled fictional avatar substitution
+
+Two newly generated fictional CC0 humanoids replace the original avatar assets in the browser demo. They provide a 53-bone rig and named ARKit/viseme targets. Motion retargeting adapts source joints to their bind pose; speaking envelopes approximate mouth motion rather than phoneme alignment. The optional recorded BEAT companion inspects public motion, face and audio files prepared locally, independently of the paper's learned algorithm. No dataset recordings or trained weights are bundled.
