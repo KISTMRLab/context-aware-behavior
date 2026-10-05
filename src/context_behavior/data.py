@@ -1,104 +1,126 @@
+"""Sentence-level class labels over the Table 1 ontology.
+
+Each JSONL row is ``{"text", "subject", "action", "position", "target"}`` with exact
+ontology class names; ``None`` (or an omitted key) is the paper's None class.
+Rows in the earlier span format (``intent`` + character-offset ``entities``) are
+converted on load: each span's text is mapped onto a class through the ontology
+synonym lists, and ``context-behavior-data convert`` rewrites such files.
+"""
 from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
-ENTITY_TYPES = ("action", "position", "target")
-INTENTS = ("conversation", "action")
-
-
-@dataclass(frozen=True)
-class EntitySpan:
-    start: int
-    end: int
-    type: str
-    value: str
+from .ontology import CONVERSATION, ENTITY_HEADS, HEADS, NONE, VIRTUAL_HUMAN, Ontology
 
 
 @dataclass(frozen=True)
 class Record:
     text: str
-    intent: str
-    entities: tuple[EntitySpan, ...]
+    subject: str
+    action: str = NONE
+    position: str = NONE
+    target: str = NONE
+
+    def labels(self) -> dict[str, str]:
+        return {head: getattr(self, head) for head in HEADS}
 
 
-def load_records(path: str | Path) -> list[Record]:
+def is_legacy(raw: dict) -> bool:
+    return "intent" in raw and "subject" not in raw
+
+
+def convert_legacy(raw: dict, ontology: Ontology) -> dict:
+    """Old span rows -> class rows. Span values become classes via the synonym map."""
+    text = str(raw["text"])
+    intent = str(raw["intent"]).casefold()
+    if intent not in {"conversation", "action"}:
+        raise ValueError("legacy intent must be 'conversation' or 'action'")
+    row = {"text": text, "subject": CONVERSATION if intent == "conversation" else VIRTUAL_HUMAN,
+           "action": NONE, "position": NONE, "target": NONE}
+    for entity in raw.get("entities", []):
+        kind = entity["type"]
+        if kind not in ENTITY_HEADS:
+            raise ValueError(f"unknown entity type: {kind}")
+        start, end = int(entity["start"]), int(entity["end"])
+        if not 0 <= start < end <= len(text):
+            raise ValueError(f"invalid span {start}:{end}")
+        value = str(entity.get("value", text[start:end]))
+        if text[start:end].casefold() != value.casefold():
+            raise ValueError(f"span text does not match value '{value}'")
+        row[kind] = ontology.from_surface(kind, value)
+    return row
+
+
+def make_record(raw: dict, ontology: Ontology) -> Record:
+    if is_legacy(raw):
+        raw = convert_legacy(raw, ontology)
+    text = str(raw["text"]).strip()
+    if not text:
+        raise ValueError("text is empty")
+    labels = {head: ontology.canonical(head, raw.get(head)) for head in HEADS}
+    record = Record(text, **labels)
+    validate_record(record, ontology)
+    return record
+
+
+def validate_record(record: Record, ontology: Ontology) -> None:
+    for head in HEADS:
+        if getattr(record, head) not in ontology.classes[head]:
+            raise ValueError(f"{head} '{getattr(record, head)}' is not in the ontology")
+    if record.subject == CONVERSATION:
+        if any(getattr(record, head) != NONE for head in ENTITY_HEADS):
+            raise ValueError("conversation (Subject None) rows must have Action/Position/Target None")
+        return
+    if record.action == NONE:
+        raise ValueError("Virtual Human rows need an Action other than None")
+    if record.target == NONE and record.action not in ontology.target_optional_actions:
+        raise ValueError(f"Action '{record.action}' needs a Target; target-less actions are "
+                         f"{sorted(ontology.target_optional_actions)}")
+
+
+def load_records(path: str | Path, ontology: Ontology | None = None) -> list[Record]:
+    ontology = ontology or Ontology.load()
     records: list[Record] = []
     for line_number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
         try:
-            raw = json.loads(line)
-            record = Record(str(raw["text"]), str(raw["intent"]), tuple(EntitySpan(**item) for item in raw.get("entities", [])))
-            validate_record(record)
+            records.append(make_record(json.loads(line), ontology))
         except (KeyError, TypeError, ValueError) as exc:
             raise ValueError(f"{path}:{line_number}: {exc}") from exc
-        records.append(record)
     if not records:
-        raise ValueError("Dataset is empty")
+        raise ValueError(f"{path}: dataset is empty")
     return records
 
 
-def validate_record(record: Record) -> None:
-    if record.intent not in INTENTS:
-        raise ValueError(f"intent must be one of {INTENTS}")
-    occupied: list[tuple[int, int]] = []
-    for entity in record.entities:
-        if entity.type not in ENTITY_TYPES:
-            raise ValueError(f"unknown entity type: {entity.type}")
-        if not 0 <= entity.start < entity.end <= len(record.text):
-            raise ValueError(f"invalid span {entity.start}:{entity.end}")
-        if record.text[entity.start:entity.end].casefold() != entity.value.casefold():
-            raise ValueError(f"span text does not match value '{entity.value}'")
-        if any(entity.start < end and start < entity.end for start, end in occupied):
-            raise ValueError("entity spans overlap")
-        occupied.append((entity.start, entity.end))
-    if record.intent == "conversation" and record.entities:
-        raise ValueError("conversation records must have no action entities")
-    if record.intent == "action":
-        present = {entity.type for entity in record.entities}
-        if not {"action", "target"}.issubset(present):
-            raise ValueError("action records require action and target spans")
+def write_records(records: list[Record], path: str | Path) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text("".join(json.dumps(asdict(r), ensure_ascii=False) + "\n" for r in records), encoding="utf-8")
 
 
-def build_label_maps(records: list[Record]) -> dict[str, list[str]]:
-    maps = {kind: {"O"} for kind in ENTITY_TYPES}
-    for record in records:
-        for entity in record.entities:
-            maps[entity.type].add(entity.value.casefold().replace(" ", "_"))
-    return {kind: ["O", *sorted(values - {"O"})] for kind, values in maps.items()}
-
-
-def encode_record(record: Record, tokenizer, label_maps: dict[str, list[str]], max_length: int):
-    encoded = tokenizer(record.text, truncation=True, max_length=max_length, return_offsets_mapping=True)
-    offsets = encoded.pop("offset_mapping")
-    labels = {kind: [-100 if start == end else 0 for start, end in offsets] for kind in ENTITY_TYPES}
-    for entity in record.entities:
-        label = entity.value.casefold().replace(" ", "_")
-        label_id = label_maps[entity.type].index(label)
-        matched = False
-        for token_index, (start, end) in enumerate(offsets):
-            if start < entity.end and entity.start < end:
-                labels[entity.type][token_index] = label_id
-                matched = True
-        if not matched:
-            raise ValueError(f"Entity '{entity.value}' was truncated; raise --max-length")
-    encoded["intent_label"] = INTENTS.index(record.intent)
-    encoded["entity_labels"] = labels
-    return encoded
+def label_counts(records: list[Record]) -> dict[str, dict[str, int]]:
+    return {head: dict(sorted(Counter(getattr(r, head) for r in records).items())) for head in HEADS}
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate the context behavior JSONL contract")
-    parser.add_argument("command", choices=["validate"])
+    parser = argparse.ArgumentParser(description="Validate or convert context-behavior JSONL (Table 1 class labels)")
+    parser.add_argument("command", choices=["validate", "convert"])
     parser.add_argument("path")
+    parser.add_argument("output", nargs="?", help="convert: destination JSONL in the class-label format")
+    parser.add_argument("--ontology", help="Ontology JSON (default: bundled Table 1 ontology)")
     args = parser.parse_args()
-    records = load_records(args.path)
-    print(json.dumps({"records": len(records), "labels": build_label_maps(records)}, indent=2))
+    ontology = Ontology.load(args.ontology)
+    records = load_records(args.path, ontology)
+    if args.command == "convert":
+        if not args.output:
+            parser.error("convert needs an output path")
+        write_records(records, args.output)
+    print(json.dumps({"records": len(records), "labels": label_counts(records)}, indent=2))
 
 
 if __name__ == "__main__":
     main()
-

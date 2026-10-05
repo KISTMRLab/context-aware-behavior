@@ -1,0 +1,65 @@
+{"text": "Hey, how are you?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Nice to meet you", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Tell me a joke", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "See you later", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "What time is it?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Are you a robot?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Tell me about yourself", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "You look nice today", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Let's talk for a while", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Do you sleep at night?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Do you have friends?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Is the light switch on?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "What is in the drawer?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Is the chair comfortable?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Whose book is that?", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "The window has a nice view", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Please don't sit on the bed", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Do not run in the room", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Please do not pick up the book", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "There is no need to turn the lamp on", "subject": "None", "action": "None", "position": "None", "target": "None"}
+{"text": "Could you walk around the room?", "subject": "Virtual Human", "action": "Walk", "position": "None", "target": "None"}
+{"text": "Step forward", "subject": "Virtual Human", "action": "Walk", "position": "None", "target": "None"}
+{"text": "Please head to the bed", "subject": "Virtual Human", "action": "Walk", "position": "To", "target": "Bed"}
+{"text": "Could you move to the window?", "subject": "Virtual Human", "action": "Walk", "position": "To", "target": "Window"}
+{"text": "Take a few steps to your left", "subject": "Virtual Human", "action": "Walk", "position": "Left", "target": "None"}
+{"text": "Step to the right", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "None"}
+{"text": "Jog in place for a bit", "subject": "Virtual Human", "action": "Run", "position": "None", "target": "None"}
+{"text": "Could you open the drawer for me?", "subject": "Virtual Human", "action": "Open", "position": "None", "target": "Drawer"}
+{"text": "Open up the top drawer", "subject": "Virtual Human", "action": "Open", "position": "None", "target": "Drawer"}
+{"text": "It's stuffy in here, open the window", "subject": "Virtual Human", "action": "Open", "position": "None", "target": "Window"}
+{"text": "Can you open that window?", "subject": "Virtual Human", "action": "Open", "position": "None", "target": "Window"}
+{"text": "Draw back the curtains", "subject": "Virtual Human", "action": "Open", "position": "None", "target": "Curtain"}
+{"text": "Push the drawer in", "subject": "Virtual Human", "action": "Close", "position": "None", "target": "Drawer"}
+{"text": "I'm cold, close the window", "subject": "Virtual Human", "action": "Close", "position": "None", "target": "Window"}
+{"text": "Close the window now", "subject": "Virtual Human", "action": "Close", "position": "None", "target": "Window"}
+{"text": "It's too bright, close the curtains", "subject": "Virtual Human", "action": "Close", "position": "None", "target": "Curtain"}
+{"text": "Have a seat", "subject": "Virtual Human", "action": "Sit", "position": "None", "target": "None"}
+{"text": "Have a seat on the chair", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Chair"}
+{"text": "Sit on the stool", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Chair"}
+{"text": "Sit down on the edge of the bed", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Bed"}
+{"text": "Please sit on the floor", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Floor"}
+{"text": "Get up", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
+{"text": "Time to get up", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
+{"text": "Switch on the lamp", "subject": "Virtual Human", "action": "Turn on", "position": "None", "target": "Lamp"}
+{"text": "Can you turn on the desk lamp?", "subject": "Virtual Human", "action": "Turn on", "position": "None", "target": "Lamp"}
+{"text": "Press the switch to turn it on", "subject": "Virtual Human", "action": "Turn on", "position": "None", "target": "Switch"}
+{"text": "Switch off the lamp", "subject": "Virtual Human", "action": "Turn off", "position": "None", "target": "Lamp"}
+{"text": "Power off the lamp", "subject": "Virtual Human", "action": "Turn off", "position": "None", "target": "Lamp"}
+{"text": "Switch off the wall switch", "subject": "Virtual Human", "action": "Turn off", "position": "None", "target": "Switch"}
+{"text": "Lay down", "subject": "Virtual Human", "action": "Lay", "position": "None", "target": "None"}
+{"text": "Please lie down on the bed", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Bed"}
+{"text": "Stretch out on the bed", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Bed"}
+{"text": "Please lie on the ground", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Floor"}
+{"text": "Wait there", "subject": "Virtual Human", "action": "Idle", "position": "None", "target": "None"}
+{"text": "Hold still", "subject": "Virtual Human", "action": "Idle", "position": "None", "target": "None"}
+{"text": "Could you fetch the pillow?", "subject": "Virtual Human", "action": "Bring", "position": "None", "target": "Pillow"}
+{"text": "Pass me the pillow", "subject": "Virtual Human", "action": "Bring", "position": "None", "target": "Pillow"}
+{"text": "Could you bring me the object?", "subject": "Virtual Human", "action": "Bring", "position": "None", "target": "Object"}
+{"text": "Can you fetch the book for me?", "subject": "Virtual Human", "action": "Bring", "position": "None", "target": "Object"}
+{"text": "Grab the pillow", "subject": "Virtual Human", "action": "Hold", "position": "None", "target": "Pillow"}
+{"text": "Grab the book please", "subject": "Virtual Human", "action": "Hold", "position": "None", "target": "Object"}
+{"text": "Put it on the bed", "subject": "Virtual Human", "action": "Put", "position": "On", "target": "Bed"}
+{"text": "Put it on the chair please", "subject": "Virtual Human", "action": "Put", "position": "On", "target": "Chair"}
+{"text": "Put it on the ground", "subject": "Virtual Human", "action": "Put", "position": "On", "target": "Floor"}
+{"text": "Put it into the drawer", "subject": "Virtual Human", "action": "Put", "position": "In", "target": "Drawer"}

@@ -1,29 +1,31 @@
 # Reimplementation requirements
 
-This project reimplements the paper's learning and behavior boundary with current PyTorch and Transformers APIs.
+This project reimplements the paper's learning and behaviour boundary with current PyTorch and Transformers APIs.
 
 ## Required behavior
 
-1. Use one BERT-family backbone for all predictions.
-2. Predict sentence intent (`conversation` or `action`) from the shared sequence representation.
-3. Jointly predict token-level `action`, `position`, and `target` labels from the shared token representations.
-4. Train all four heads in one optimization step. Support the paper's frozen-backbone regime and an explicit fine-tuning option.
-5. Accept JSONL with character-offset entity spans and align those spans to fast-tokenizer offsets.
-6. Save model weights, backbone/tokenizer, and label vocabularies together.
-7. Turn action predictions into a dispatch plan only after checking required entities, target existence, and scene affordances.
-8. Route conversation predictions separately instead of inventing an action.
+1. Use the paper's Table 1 vocabulary as the label space: Subject 2, Action 14, Position 6 and Target 11 classes, each including None as listed. Store it in `src/context_behavior/resources/ontology.json`.
+2. Encode text with one frozen BERT-family backbone. Predict Subject from [CLS], and predict Action, Position and Target with sentence-level classifiers over the ontology classes. Train all four heads in one optimisation step with summed cross-entropy. Fine-tuning the backbone is an explicit, reported extension.
+3. Accept JSONL rows of `{text, subject, action, position, target}` class labels. Allow target-less actions (Walk, Run, Idle, Stand up, Sit, Lay, Put). Convert the earlier span JSONL through the ontology synonym map.
+4. Save a self-contained checkpoint: backbone config and weights, tokenizer, ontology, head weights and training metrics. Inference and the demo server load it once without network access.
+5. Combine Action + Position + Target with scene object metadata (name, class, position, facing direction, affordances) into a behaviour plan. Reject unsupported combinations with a reason.
+6. Route Subject None (small talk and negated requests) to a pluggable dialogue client with a fixed fallback reply, instead of inventing an action.
 
 ## Data boundaries
 
-- The paper's 1,200-sentence controlled-room dataset is unavailable and is not reconstructed or claimed.
-- Users may author domain utterances, generate reviewed synthetic paraphrases, or adapt a suitably licensed public intent/slot dataset.
-- Labels describe the user's deployment scene. Public slot datasets do not automatically contain the paper's action/position/target ontology.
+- The paper's 1,200-sentence controlled-room dataset is unavailable and is neither reconstructed nor claimed.
+- The bundled starter dataset (410 sentences, CC0 1.0) was written and label-checked for this repository. Its validation accuracy is informational, not a reproduction of the paper's results.
+- Labels describe the deployment scene. Extend the data with reviewed sentences for your own objects, and keep the Table 1 classes or update the ontology deliberately.
 
 ## Acceptance checks
 
-- Dataset validation rejects overlapping or out-of-range spans and actions without action/target entities.
-- Dispatcher tests demonstrate allowed, missing-entity, unknown-target, and unsupported-affordance paths.
-- Source files compile without downloading a backbone; training/inference are documented but not run in verification.
+- Ontology tests assert the exact Table 1 class lists.
+- Data validation accepts target-less actions and rejects conversation rows with entities, Virtual Human rows without an Action, and actions that need a Target but lack one.
+- Model tests run forward and training on a tiny randomly initialised local BERT, with no downloads, and reload the self-contained checkpoint.
+- Planner tests cover Sit + On + Chair → `sit_on` at seat height, lie on bed, open/close/switch state, bring/hold/put prop moves, and rejected combinations with reasons.
+- Rule-fallback tests keep the audit inputs: "Don't open the window" is conversation, "Turn the lamp off, it is on" is Turn off, and "Put the pillow on the bed" puts the pillow.
+- Dialogue tests cover the OpenAI-compatible client, the local command client and the fallback. Server tests check that the model is loaded once.
+- `scripts/verify.py` trains the tiny backbone on the starter split through the CLI, reloads it with the inference CLI, and plans known-valid combinations.
 
 ## Bundled fictional avatar substitution
 

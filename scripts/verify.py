@@ -1,72 +1,68 @@
-"""Train, reload, infer, and dispatch through the production CLI offline."""
+"""Offline pipeline check: tiny local BERT -> train on the starter split -> reload -> plan behaviour.
+
+A randomly initialised tiny encoder is not expected to classify well, so grounding is
+also checked with known-valid Table 1 combinations and the rule fallback's audit inputs.
+"""
 import json
 import os
 import subprocess
 import sys
-from dataclasses import asdict
 from pathlib import Path
 
-import torch
-from transformers import BertConfig, BertModel, BertTokenizerFast
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 
-from context_behavior.dispatcher import ActionDispatcher
+from context_behavior.data import load_records  # noqa: E402
+from context_behavior.dialogue import build_dialogue  # noqa: E402
+from context_behavior.ontology import Ontology, check_table1  # noqa: E402
+from context_behavior.rules import RuleInterpreter  # noqa: E402
+from context_behavior.scene import BehaviorPlanner  # noqa: E402
+from context_behavior.tiny import make_tiny_backbone  # noqa: E402
+
+STARTER = ROOT / "src" / "context_behavior" / "resources" / "starter"
 
 
 def run(*arguments: str) -> str:
     environment = os.environ.copy()
-    source = str(Path(__file__).resolve().parents[1] / "src")
-    environment["PYTHONPATH"] = source + os.pathsep + environment.get("PYTHONPATH", "")
-    completed = subprocess.run([sys.executable, *arguments], check=True, text=True,
-                               capture_output=True, env=environment)
+    environment["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + environment.get("PYTHONPATH", "")
+    completed = subprocess.run([sys.executable, *arguments], check=True, text=True, capture_output=True, env=environment)
     print(completed.stdout, end="")
     return completed.stdout
 
 
-def entity(text: str, value: str, kind: str) -> dict:
-    start = text.index(value)
-    return {"start": start, "end": start + len(value), "type": kind, "value": value}
-
-
 def main():
-    root = Path("outputs/verify").resolve(); root.mkdir(parents=True, exist_ok=True)
-    backbone = root / "tiny-backbone"; backbone.mkdir(exist_ok=True)
-    vocab = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "please", "open", "close",
-             "the", "drawer", "hello", "there", "how", "are", "you"]
-    (backbone / "vocab.txt").write_text("\n".join(vocab) + "\n", encoding="utf-8")
-    tokenizer = BertTokenizerFast(vocab_file=str(backbone / "vocab.txt"), do_lower_case=True)
-    tokenizer.save_pretrained(backbone)
-    BertModel(BertConfig(vocab_size=len(tokenizer), hidden_size=32, num_hidden_layers=1,
-                         num_attention_heads=4, intermediate_size=64)).save_pretrained(backbone)
+    out = ROOT / "outputs" / "verify"
+    out.mkdir(parents=True, exist_ok=True)
+    ontology = Ontology.load()
+    check_table1(ontology)
+    train, val = load_records(STARTER / "train.jsonl"), load_records(STARTER / "val.jsonl")
+    backbone = make_tiny_backbone(out / "tiny-backbone", [r.text for r in train + val])
+    model = out / "model"
+    run("-m", "context_behavior.train", "--output", str(model), "--backbone", str(backbone), "--epochs", "3")
+    for name in ("backbone/config.json", "tokenizer/vocab.txt", "ontology.json", "heads.pt", "metrics.json"):
+        assert (model / name).is_file(), name
+    scene = ROOT / "demo" / "scene.json"
+    prediction = json.loads(run("-m", "context_behavior.infer", "--model", str(model), "--scene", str(scene), "Please sit on the chair"))
+    for head in ("subject", "action", "position", "target"):
+        assert prediction["prediction"][head] in ontology.classes[head]
+    assert {"accepted", "route", "reason", "command", "steps"} <= set(prediction["dispatch"])
+    (out / "prediction.json").write_text(json.dumps(prediction, indent=2), encoding="utf-8")
 
-    texts = ["please open the drawer", "please close the drawer", "hello there", "how are you"]
-    records = []
-    for text in texts[:2]:
-        action = "open" if "open" in text else "close"
-        records.append({"text": text, "intent": "action",
-                        "entities": [entity(text, action, "action"), entity(text, "drawer", "target")]})
-    records.extend({"text": text, "intent": "conversation", "entities": []} for text in texts[2:])
-    dataset = root / "train.jsonl"
-    dataset.write_text("\n".join(json.dumps(row) for row in records) + "\n", encoding="utf-8")
-    model_dir = root / "model"
-    run("-m", "context_behavior.train", "--train", str(dataset), "--output", str(model_dir),
-        "--backbone", str(backbone), "--epochs", "2", "--batch-size", "2")
-
-    scene = root / "scene.json"
-    scene.write_text(json.dumps({"objects": [{"id": "drawer", "affordances": ["open", "close"]}]}), encoding="utf-8")
-    raw = run("-m", "context_behavior.infer", "--model", str(model_dir), "--scene", str(scene),
-              "please open the drawer")
-    prediction = json.loads(raw)
-    assert prediction["intent"] in {"action", "conversation"}
-    assert isinstance(prediction["entities"], dict)
-    assert set(prediction["dispatch"]) == {"accepted", "route", "reason", "command"}
-    assert all(torch.isfinite(value).all() for value in torch.load(model_dir / "model.pt", weights_only=True).values())
-    (root / "prediction.json").write_text(json.dumps(prediction, indent=2), encoding="utf-8")
-
-    # Random tiny weights need not predict correctly; verify grounding independently with a known-valid parse.
-    known = ActionDispatcher.load(scene).dispatch("action", {"action": "open", "target": "drawer"})
-    assert known.accepted and known.command == {"actor": "virtual_human", "action": "open", "target": "drawer"}
-    (root / "known-valid-dispatch.json").write_text(json.dumps(asdict(known), indent=2), encoding="utf-8")
-    print(f"verification passed: two training epochs, checkpoint reload, prediction schema, and grounded dispatch -> {root}")
+    planner = BehaviorPlanner.load(scene)
+    sit = planner.plan({"subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Chair"})
+    assert sit.accepted and sit.command["behavior"] == "sit_on" and any(s["op"] == "sit" for s in sit.steps)
+    rejected = planner.plan({"subject": "Virtual Human", "action": "Sit", "position": "In", "target": "Drawer"})
+    assert not rejected.accepted and "does not support" in rejected.reason
+    rules = RuleInterpreter(ontology)
+    assert rules.predict("Don't open the window")["subject"] == "None"
+    assert rules.predict("Turn the lamp off, it is on")["action"] == "Turn off"
+    put = BehaviorPlanner.load(scene).plan(rules.predict("Put the pillow on the bed"))
+    assert put.accepted and any(s["op"] == "place" and s["object"] == "pillow" for s in put.steps)
+    assert build_dialogue("fixed").respond("hello")["reply"]
+    (out / "known-valid-plans.json").write_text(json.dumps({"sit_on_chair": sit.to_dict(), "sit_in_drawer": rejected.to_dict(),
+                                                            "put_pillow_on_bed": put.to_dict()}, indent=2), encoding="utf-8")
+    print(f"verification passed: Table 1 ontology, starter data ({len(train)} train / {len(val)} val), tiny-BERT training, "
+          f"self-contained checkpoint reload, behaviour planning and rule regressions -> {out}")
 
 
 if __name__ == "__main__":

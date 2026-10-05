@@ -1,41 +1,40 @@
+"""Compatibility wrapper: the earlier ``ActionDispatcher.dispatch(intent, entities)`` API over BehaviorPlanner."""
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from pathlib import Path
 
+from .ontology import ENTITY_HEADS, Ontology
+from .scene import BehaviorPlanner, Decision
 
-@dataclass(frozen=True)
-class DispatchResult:
-    accepted: bool
-    route: str
-    reason: str
-    command: dict[str, str] | None = None
+DispatchResult = Decision
 
 
 class ActionDispatcher:
     """Ground predictions in a declared scene instead of blindly invoking animations."""
 
-    def __init__(self, scene: dict):
-        self.objects = {item["id"]: item for item in scene.get("objects", [])}
+    def __init__(self, scene: dict, ontology: Ontology | None = None):
+        self.planner = BehaviorPlanner(scene, ontology)
+        self.ontology = self.planner.ontology
 
     @classmethod
     def load(cls, path: str | Path) -> "ActionDispatcher":
         return cls(json.loads(Path(path).read_text(encoding="utf-8")))
 
-    def dispatch(self, intent: str, entities: dict[str, str]) -> DispatchResult:
-        if intent == "conversation":
-            return DispatchResult(True, "conversation", "route to the configured dialogue adapter")
-        action, target = entities.get("action"), entities.get("target")
-        if not action or not target:
-            return DispatchResult(False, "action", "action and target entities are required")
-        obj = self.objects.get(target)
-        if obj is None:
-            return DispatchResult(False, "action", f"target '{target}' is not present in the scene")
-        if action not in obj.get("affordances", []):
-            return DispatchResult(False, "action", f"target '{target}' does not support '{action}'")
-        command = {"actor": "virtual_human", "action": action, "target": target}
-        if entities.get("position"):
-            command["position"] = entities["position"]
-        return DispatchResult(True, "action", "scene and affordance checks passed", command)
+    def _class(self, head: str, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if head == "target":
+            match = next((o for o in self.planner.scene["objects"] if o["id"] == value), None)
+            if match:
+                return match["class"]
+        try:
+            return self.ontology.from_surface(head, value)
+        except ValueError:
+            return None
 
+    def dispatch(self, intent: str, entities: dict[str, str], commit: bool = False) -> Decision:
+        prediction = {"subject": intent, **{head: self._class(head, entities.get(head)) for head in ENTITY_HEADS}}
+        if entities.get("target") and prediction["target"] is None:
+            return Decision(False, "action", f"target '{entities['target']}' is not present in the scene")
+        return self.planner.plan(prediction, commit=commit)

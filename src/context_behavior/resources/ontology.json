@@ -1,0 +1,55 @@
+{
+  "name": "context-aware-behavior room ontology",
+  "version": 1,
+  "source": "Table 1 (Possible interaction vocabulary) of Kim, Ali, Kim, Kim and Hwang, IEEE VR Abstracts and Workshops 2021. Class names and counts follow the table; the synonym lists are authored for this reimplementation.",
+  "classes": {
+    "subject": ["None", "Virtual Human"],
+    "action": ["None", "Walk", "Open", "Close", "Sit", "Stand up", "Turn on", "Turn off", "Lay", "Run", "Idle", "Bring", "Hold", "Put"],
+    "position": ["None", "Left", "Right", "In", "On", "To"],
+    "target": ["None", "Floor", "Chair", "Drawer", "Bed", "Lamp", "Window", "Curtain", "Object", "Pillow", "Switch"]
+  },
+  "subject_meaning": {
+    "None": "small talk / conversation; routed to the dialogue client and all entity classes are None",
+    "Virtual Human": "a request for the virtual human to act; Action must not be None"
+  },
+  "target_optional_actions": ["Walk", "Run", "Idle", "Stand up", "Sit", "Lay", "Put"],
+  "legacy_aliases": {
+    "action": {"Walk": ["move_to", "walk_to", "go_to"], "Sit": ["sit_on"], "Lay": ["lie_on", "lay_on"]}
+  },
+  "synonyms": {
+    "action": {
+      "Walk": ["walk", "go", "move", "come", "head", "step", "approach", "stroll", "take a few steps", "take a step"],
+      "Open": ["open", "pull out", "pull open", "slide open", "draw back", "open up"],
+      "Close": ["close", "shut", "push in", "pull shut", "slide shut", "close up"],
+      "Sit": ["sit", "sit down", "take a seat", "have a seat", "be seated"],
+      "Stand up": ["stand up", "stand", "get up", "rise", "get off", "get out of", "on your feet", "up you get"],
+      "Turn on": ["turn on", "switch on", "power on", "light up", "flip on"],
+      "Turn off": ["turn off", "switch off", "power off", "shut off", "flip off"],
+      "Lay": ["lay", "lie", "lie down", "lay down", "nap", "take a nap", "sleep", "go to sleep", "stretch out"],
+      "Run": ["run", "jog", "rush", "hurry", "sprint", "dash"],
+      "Idle": ["idle", "relax", "wait", "stay", "stay put", "chill", "do nothing", "rest", "hold still", "take it easy"],
+      "Bring": ["bring", "fetch", "get me", "give me", "hand me", "pass me", "bring me", "get", "carry over"],
+      "Hold": ["hold", "pick up", "grab", "take", "carry", "lift"],
+      "Put": ["put", "place", "set", "drop", "leave", "put down", "set down", "store"]
+    },
+    "position": {
+      "Left": ["left", "to the left", "left side", "left hand"],
+      "Right": ["right", "to the right", "right side", "right hand"],
+      "In": ["in", "into", "inside"],
+      "On": ["on", "onto", "on top of", "upon"],
+      "To": ["to", "towards", "toward", "over to", "up to"]
+    },
+    "target": {
+      "Floor": ["floor", "ground"],
+      "Chair": ["chair", "seat", "stool", "armchair"],
+      "Drawer": ["drawer", "drawers", "dresser", "chest of drawers"],
+      "Bed": ["bed", "mattress"],
+      "Lamp": ["lamp", "light", "lights", "desk lamp", "bedside lamp", "reading light", "floor lamp"],
+      "Window": ["window", "windows"],
+      "Curtain": ["curtain", "curtains", "drapes", "blinds"],
+      "Object": ["object", "box", "book", "cup", "thing", "item", "toy", "ball", "bottle"],
+      "Pillow": ["pillow", "pillows", "cushion"],
+      "Switch": ["switch", "light switch", "wall switch", "switches"]
+    }
+  }
+}

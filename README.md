@@ -40,7 +40,7 @@ Pilot study of perceived naturalness and user experience
 
 ## Explore the implementation
 
-A shared BERT backbone with intent/entity heads, labeled-data validation, training/inference and scene-affordance checks before action dispatch.
+A frozen BERT backbone with a sentence head and three Table 1 class heads, an authored starter dataset, and scene-metadata behaviour planning (sit, lie, open/close, switch, bring/hold/put, walk) with rejection of unsupported combinations.
 
 This repository contains independently written research code. The institute's original source, datasets and trained models are not distributed. Public-data preparation, commands, assumptions and checks are documented below and in [REQUIREMENTS.md](REQUIREMENTS.md).
 
@@ -79,7 +79,14 @@ The application uses `automatic` retrieval for recorded co-speech motion: a curr
 
 This repository reimplements the core method from **“Auto-generating Virtual Human Behavior by Understanding User Contexts”** by Hanseob Kim, Ghazanfar Ali, Seungwon Kim, Gerard J. Kim, and Jae-In Hwang, IEEE VR Abstracts and Workshops 2021, pp. 591–592. DOI: [10.1109/VRW52623.2021.00178](https://doi.org/10.1109/VRW52623.2021.00178).
 
-The original institute code and 1,200-sentence room dataset are unavailable. This independent implementation provides the paper's essential shared BERT backbone, sentence conversation/action head, three token-level entity heads, joint loss, and grounded action dispatch. It does not include the paper's model weights, participant data, Unity room, animations, speech services, or reported study results.
+The original institute code and 1,200-sentence room dataset are unavailable. This independent implementation follows the paper's design:
+
+- **Ontology.** [`ontology.json`](src/context_behavior/resources/ontology.json) holds the Table 1 classes exactly: Subject (None/small talk, Virtual Human), 14 Actions (None, Walk, Open, Close, Sit, Stand up, Turn on, Turn off, Lay, Run, Idle, Bring, Hold, Put), 6 Positions (None, Left, Right, In, On, To) and 11 Targets (None, Floor, Chair, Drawer, Bed, Lamp, Window, Curtain, Object, Pillow, Switch). Authored synonym lists map paraphrases such as *switch on*/*turn on* and *light*/*lamp* onto one class.
+- **Model.** A frozen BERT encoder feeds a sentence classifier on [CLS] (Subject) and three entity classifiers over the Action, Position and Target classes. The four heads are trained jointly with the sum of their cross-entropy losses. The paper does not state the entity classifiers' input; here they read [CLS] concatenated with the masked mean of the token vectors.
+- **Behaviour.** Each scene object carries a name, Target class, position, facing direction and an affordance table. The planner combines Action + Position + Target with that metadata, for example Sit + On + Chair → walk to the chair's front, turn, and sit at seat height. It rejects unsupported combinations with a reason.
+- **Dialogue.** Conversation-class input goes to a pluggable dialogue client, where the paper used DialogFlow.
+
+It does not include the paper's model weights, participant data, Unity room or animations, and it reports no study results.
 
 ### Immediate browser demo
 
@@ -87,83 +94,127 @@ The original institute code and 1,200-sentence room dataset are unavailable. Thi
 py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -e .
-python scripts/prepare_viewer.py
-python -m context_behavior.demo
+python -m pip install -r scripts/requirements-demo.txt
+python scripts/start_demo.py --train-starter
 ```
 
-Open `http://127.0.0.1:8762`. The default room uses authored phrase rules and a bundled fictional CC0 character; trained BERT inference uses the checkpoint workflow below.
+`--train-starter` trains `outputs/starter-model/` on the bundled starter dataset, then starts the room with that checkpoint. The first run downloads `google-bert/bert-base-uncased` from Hugging Face; pass `--backbone C:\path\to\local-bert` to use a local copy. Because the encoder is frozen, its sentence features are computed once and only the heads train, so this takes about a minute on a 16-thread CPU. Later `python scripts/start_demo.py` runs reuse the checkpoint. Without one, the room uses the **labelled rule fallback**, and the page names whichever interpreter is active.
 
-### Detailed setup and checks
+The rule fallback matches the ontology synonym lists. It treats questions about the room and negated requests ("Don't open the window") as conversation, and it reads split phrasal verbs from their particle ("Turn the lamp off, it is on" → Turn off). It is a transparent fallback, not the paper's learned classifier.
 
-```powershell
-py -3.11 -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -e ".[dev]"
-pytest -q
-```
+In the room, each reply shows the four predicted classes. For action requests it also shows the combined behaviour (for example `Sit · On · Chair → sit_on chair`) and the renderer steps. The virtual human walks to each object's approach point, which comes from the object's facing direction, then turns to it. It then sits, lies, reaches, opens or closes, switches lamps and the light switch, or carries props in its hand (bring, hold, put). Click an object button to inspect its metadata. **Reset room** restores the initial state. Small talk is answered by the dialogue client with recorded co-speech motion.
 
-The first training run downloads the selected Hugging Face backbone. See the official [BERT model documentation](https://huggingface.co/docs/transformers/model_doc/bert) and [token-classification guide](https://huggingface.co/docs/transformers/main/tasks/token_classification).
+### Starter dataset
 
-### Procedural verification
+[`resources/starter/`](src/context_behavior/resources/starter/) contains 410 sentences written and label-checked for this repository: 345 for training and 65 for validation. They cover every Table 1 class, plus small talk, questions about the room and negated requests. Negated requests are labelled as conversation, so no action is taken. [`provenance.json`](src/context_behavior/resources/starter/provenance.json) records origin, licence (CC0 1.0), split rule and class counts. Rebuild the files with `python scripts/build_starter_dataset.py` after editing the sentence lists.
 
-Run `python scripts/verify.py` after installation. It saves a small local BERT/tokenizer, trains the normal JSONL pipeline for two CPU epochs, reloads the checkpoint through the inference CLI, and validates the prediction/dispatch output schema. Because randomly initialized weights are not expected to be accurate, a separate known-valid parse checks scene grounding deterministically. Inspect the dataset, checkpoint, prediction, and grounded result under `outputs/verify/`. For real data, keep the same JSONL and scene contracts below and replace the local backbone and training records.
+This is not the paper's dataset. Accuracy on its small validation split only shows that the pipeline learns; it is not a benchmark. Extend it with sentences reviewed for your own scene and keep paraphrases of one template within a single split.
 
-### Prepare domain data
+### Data format
 
-Training input is UTF-8 JSONL. Spans use Python character offsets (`start` inclusive, `end` exclusive), must not overlap, and must exactly match `value`:
+Training input is UTF-8 JSONL with one Table 1 class per category. An omitted key or `"None"` means the None class:
 
 ```json
-{"text":"Please put the pillow on the bed","intent":"action","entities":[{"start":7,"end":10,"type":"action","value":"put"},{"start":15,"end":21,"type":"target","value":"pillow"},{"start":22,"end":24,"type":"position","value":"on"}]}
-{"text":"How are you today?","intent":"conversation","entities":[]}
+{"text": "Please put the pillow on the bed", "subject": "Virtual Human", "action": "Put", "position": "On", "target": "Bed"}
+{"text": "Walk to the left", "subject": "Virtual Human", "action": "Walk", "position": "Left", "target": "None"}
+{"text": "How are you today?", "subject": "None"}
 ```
 
-Author a balanced inventory around objects and affordances that actually exist in your scene, then add human-reviewed paraphrases. Keep train/validation/test speakers or templates separate to avoid paraphrase leakage. Validate before training:
+Validation rules:
+
+- Conversation rows must have None entities.
+- Virtual Human rows need an Action.
+- A Target is required except for Walk, Run, Idle, Stand up, Sit, Lay and Put, which the planner resolves from the scene.
+
+Files in the earlier span format (`intent` plus character-offset `entities`) are converted on load. Each span is mapped onto its class through the ontology synonyms. To rewrite such a file:
 
 ```powershell
 context-behavior-data validate .\data\train.jsonl
+context-behavior-data convert .\data\old-spans.jsonl .\data\train.jsonl
 ```
-
-For public starting material, the [SNIPS NLU benchmark](https://github.com/snipsco/nlu-benchmark) supplies intent/slot utterances under Apache-2.0. Its domains are not room actions: review its license, map only compatible utterances into this contract, and author the action/position/target labels for your scene. Synthetic utterances must be reviewed because a generator can create impossible or mislabeled actions. No dataset is bundled.
 
 ### Train and infer
 
-The default freezes the shared backbone as described in the paper and learns all four heads jointly:
+```powershell
+context-behavior-train --output .\artifacts\room-model --backbone google-bert/bert-base-uncased
+context-behavior-train --train .\data\train.jsonl --val .\data\val.jsonl --output .\artifacts\room-model
+context-behavior-infer --model .\artifacts\room-model --scene .\demo\scene.json "Could you switch the light on?"
+python -m context_behavior.demo --model .\artifacts\room-model
+```
+
+Without `--train`, training uses the starter split. The best epoch by validation loss is kept, and the run writes `metrics.json`.
+
+`--fine-tune-backbone` updates BERT instead of freezing it. That is an extension of the paper, so report it when comparing runs.
+
+The checkpoint folder is self-contained:
+
+- `backbone/`: the encoder config and weights;
+- `tokenizer/`;
+- `ontology.json`;
+- `heads.pt`;
+- `config.json`.
+
+Inference needs no network access. The demo server loads the checkpoint once and reuses it for every request. Checkpoints from the earlier token-tagging version are reported as legacy and must be retrained.
+
+### Scene metadata
+
+[`demo/scene.json`](demo/scene.json) uses metres, with +x to the screen's right and -z away from the user. Each object has these fields:
+
+- `name`;
+- `class` (a Table 1 Target);
+- `position`;
+- `facing`: the yaw in degrees of the object's front, where 0 faces the user;
+- `size`;
+- optional `seat_height`, `surface_height`, `head_direction`, `handle` and `carryable`;
+- `affordances`, mapping each Action to its allowed Positions.
+
+Walk and Run (None, To, Left, Right) and Stand up are implicit for every object. A virtual Floor target supports sitting, lying and putting. Left and Right are taken from the user's view. With Open, Close, Turn on, Turn off and Hold they select the hand.
+
+Put labels the destination as Target. With nothing in hand, it first picks up a carryable object named in the sentence ("Put the pillow on the bed"); otherwise it is rejected. Put In a closed drawer opens it first.
+
+The earlier `{id, affordances: ["open", "sit_on", ...]}` scene format is still accepted. `ActionDispatcher.dispatch(intent, entities)` remains as a compatibility wrapper around `BehaviorPlanner`.
+
+### Dialogue client
+
+Conversation-class input is answered by one of three clients:
+
+- `--dialogue fixed` (default): a fixed reply.
+- `--dialogue openai --dialogue-url http://127.0.0.1:11434/v1 --dialogue-model <name>`: any OpenAI-compatible chat-completions server, local or hosted. An API key is read only from `CONTEXT_DIALOGUE_API_KEY`.
+- `--dialogue command --dialogue-command "<program>"`: a local program that reads the utterance on stdin and prints the reply.
+
+`start_demo.py` passes the same options through. Any client error or timeout falls back to the fixed reply, and the response reports `fallback: true`. Negated requests get a short acknowledgement instead of an action. Replies are spoken with the shared co-speech gesture route (`/api/beat-query`).
+
+### Checks
 
 ```powershell
-context-behavior-train --train .\data\train.jsonl --output .\artifacts\room-model --epochs 5
+pip install -e ".[dev]"
+pytest -q
+python scripts/verify.py
 ```
 
-Add `--fine-tune-backbone` to update the backbone. That is an extension, so report it when comparing experiments.
+The tests and `scripts/verify.py` build a tiny randomly initialised local BERT, so they need no downloads. They cover:
 
-Create `scene.json` to bind language labels to real application capabilities:
+- Table 1 loading;
+- data validation, including target-less actions and legacy conversion;
+- joint training and the self-contained checkpoint reload;
+- combination planning, including the Sit + On + Chair → `sit_on` regression and rejected combinations;
+- dialogue routing and fallback;
+- server-side model caching.
 
-```json
-{
-  "objects": [
-    {"id": "lamp", "affordances": ["turn_on", "turn_off"]},
-    {"id": "drawer", "affordances": ["open", "close"]}
-  ]
-}
-```
+The tiny model's predictions are not expected to be accurate; grounding is checked with known-valid class combinations. Inspect the outputs under `outputs/verify/`.
 
-Then run:
+### Renderer requirements
 
-```powershell
-context-behavior-infer --model .\artifacts\room-model --scene .\scene.json "Please turn on the lamp"
-```
-
-Inference reports the predicted intent/entities and a dispatch decision. The dispatcher refuses missing entities, unknown targets, and unsupported affordances. A host application should route accepted commands to its animation controller and conversation intents to its chosen dialogue system.
-
-### Local 3D room
-
-Run `python scripts/prepare_viewer.py` once to fetch a pinned Three.js module into ignored `static/vendor/`. Start `python -m context_behavior.demo` and open `http://127.0.0.1:8762`. The default interpreter is **explicit authored phrase rules** over `demo/scene.json`; the interface labels it that way and never presents it as a trained model. For shared BERT intent/entity inference, train with the JSONL workflow above and start `python -m context_behavior.demo --model artifacts/room-model`. The room changes only when `ActionDispatcher` accepts an action, and every object exposes its current state and affordances. The bundled fictional CC0 character is an integration renderer; the paper's Unity character is not distributed.
-
-`python scripts/verify.py` trains a tiny randomly initialized BERT checkpoint to check pipeline wiring; its predictions are not accuracy evidence. Use reviewed scene-specific training and held-out validation data before relying on model output. The wearable MR agent paper is the framework lineage for this work, not a runtime dependency of this standalone repository.
+The room uses the shared renderer's `lookAt`, `reachTo`, `sit`, `lie`, `stand` and `setExpression` when they are available. If an older vendored `static/avatar.js` lacks them, the room still walks, turns, points, moves props and changes object states, but it shows no seated or lying pose. The bundled fictional CC0 character is an integration renderer; the paper's Unity character and animations are not distributed.
 
 ### Optional local speech
 
-Browser speech is selected by default. To enable **Local Kokoro** and audio transcription, install `python -m pip install -e ".[speech]"`. Set `KOKORO_MODEL_DIR` to a user-prepared folder containing `config.json`, `kokoro-v1_0.pth`, and `voices/af_heart.pt` from [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M). Follow the [Kokoro phonemizer setup](https://github.com/hexgrad/kokoro), including espeak-ng where needed. Set `WHISPER_MODEL_DIR` to a locally prepared faster-whisper small model directory containing `model.bin`. In PowerShell, set `$env:KOKORO_MODEL_DIR='C:\path\to\kokoro'` and `$env:WHISPER_MODEL_DIR='C:\path\to\whisper-small'` before starting the room. Record or upload audio to fill the utterance field; action routing still passes through the scene-affordance checks. Missing paths produce explicit errors and never trigger model downloads.
+Browser speech is selected by default. To enable **Local Kokoro** and audio transcription, install `python -m pip install -e ".[speech]"`.
+
+- **Kokoro:** set `KOKORO_MODEL_DIR` to a user-prepared folder containing `config.json`, `kokoro-v1_0.pth` and `voices/af_heart.pt` from [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M). Follow the [Kokoro phonemizer setup](https://github.com/hexgrad/kokoro), including espeak-ng where needed.
+- **Transcription:** set `WHISPER_MODEL_DIR` to a locally prepared faster-whisper small model directory containing `model.bin`.
+
+In PowerShell, set `$env:KOKORO_MODEL_DIR='C:\path\to\kokoro'` and `$env:WHISPER_MODEL_DIR='C:\path\to\whisper-small'` before starting the room. Record or upload audio to fill the utterance field; action routing still passes through the scene checks. Missing paths produce explicit errors and never trigger model downloads.
 
 <!-- avatar-recorded-motion:start -->
 ## Bundled characters and recorded public motion
