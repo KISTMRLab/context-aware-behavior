@@ -3,10 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlsplit
 from .avatar_http import serve_avatar_asset
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from beat_runtime import serve_beat
 
 from .dispatcher import ActionDispatcher
 from .speech_backend import SpeechBackend, speech_route
@@ -47,13 +51,14 @@ def app(scene: dict, model: Path | None):
             self.wfile.write(body)
 
         def do_GET(self):
+            if serve_beat(self, ROOT, "automatic"): return
             if serve_avatar_asset(self, Path(__file__).resolve().parents[2] / "static"): return
             if self.path == "/api/scene":
                 self.send_json({"scene": scene, "states": states, "backend": "trained BERT checkpoint" if model else "explicit authored rules"})
             elif self.path == "/api/speech":
                 self.send_json(speech.status())
-            elif self.path in {"/static/avatar.js", "/static/speech.js", "/static/voice-input.js", "/static/vendor/three.module.js"}:
-                body = (ROOT / self.path.lstrip("/")).read_bytes()
+            elif urlsplit(self.path).path in {"/static/avatar.js", "/static/speech.js", "/static/voice-input.js", "/static/application-gesture.js", "/static/gesture-library.js", "/static/vendor/three.module.js"}:
+                body = (ROOT / urlsplit(self.path).path.lstrip("/")).read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/javascript")
                 self.send_header("Content-Length", str(len(body)))
@@ -70,6 +75,7 @@ def app(scene: dict, model: Path | None):
                 self.send_error(404)
 
         def do_POST(self):
+            if serve_beat(self, ROOT, "automatic"): return
             if speech_route(self, speech):
                 return
             if self.path != "/api/interpret":

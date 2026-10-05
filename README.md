@@ -61,12 +61,15 @@ From the repository root, using the Python environment described below:
 
 ```sh
 python -m pip install -e .
+python -m pip install -r scripts/requirements-demo.txt
 python scripts/start_demo.py
 ```
 
-Open **http://127.0.0.1:8080/**. Click **Interpret and dispatch** to act on the prefilled drawer request in the bundled scene. The launcher selects the bundled inputs automatically; it also builds the small authored index for RAG demos. Avatar demos prepare their pinned Three.js modules on first launch, so that step needs internet access. Model weights and public datasets are optional for the starter workflow and are prepared separately for real-data use.
+Open **http://127.0.0.1:8080/**. Click **Interpret and dispatch** to act on the prefilled drawer request in the bundled scene. The launcher prepares pinned Three.js modules and downloads one small official BEAT BVH/TextGrid sample on first run. It builds a nine-clip local bank and fits the Automatic Text-to-Gesture rule-map adapter for conversation responses only under ignored `outputs/beat-library/`; later runs reuse the cache. The first run needs internet access. Original recordings, large datasets, institute assets, and pretrained gesture weights are not distributed.
 
 The 3D presentation uses shared Three.js avatar components and bundled fictional CC0 characters. The paper-specific algorithms and data adapters live in this repository.
+
+The application uses `automatic` retrieval for recorded co-speech motion: a current public-demo adapter; it is not a method claimed by the intent/action paper. The intent/entity interpretation and affordance-checked action dispatch remain this application's core; action/navigation poses are separate. The BEAT preparation and retrieval dependencies are vendored in this repository, so no sibling repository checkout is needed. See `scripts/prepare_beat_demo.py` to rebuild the ignored local bank.
 
 <!-- demo-preview:end -->
 
@@ -88,7 +91,7 @@ python scripts/prepare_viewer.py
 python -m context_behavior.demo
 ```
 
-Open `http://127.0.0.1:8762`. The default room uses authored phrase rules and a procedural character; trained BERT inference uses the checkpoint workflow below.
+Open `http://127.0.0.1:8762`. The default room uses authored phrase rules and a bundled fictional CC0 character; trained BERT inference uses the checkpoint workflow below.
 
 ### Detailed setup and checks
 
@@ -154,7 +157,7 @@ Inference reports the predicted intent/entities and a dispatch decision. The dis
 
 ### Local 3D room
 
-Run `python scripts/prepare_viewer.py` once to fetch a pinned Three.js module into ignored `static/vendor/`. Start `python -m context_behavior.demo` and open `http://127.0.0.1:8762`. The default interpreter is **explicit authored phrase rules** over `demo/scene.json`; the interface labels it that way and never presents it as a trained model. For shared BERT intent/entity inference, train with the JSONL workflow above and start `python -m context_behavior.demo --model artifacts/room-model`. The room changes only when `ActionDispatcher` accepts an action, and every object exposes its current state and affordances. The procedural character is an integration renderer; the paper's Unity character is not distributed.
+Run `python scripts/prepare_viewer.py` once to fetch a pinned Three.js module into ignored `static/vendor/`. Start `python -m context_behavior.demo` and open `http://127.0.0.1:8762`. The default interpreter is **explicit authored phrase rules** over `demo/scene.json`; the interface labels it that way and never presents it as a trained model. For shared BERT intent/entity inference, train with the JSONL workflow above and start `python -m context_behavior.demo --model artifacts/room-model`. The room changes only when `ActionDispatcher` accepts an action, and every object exposes its current state and affordances. The bundled fictional CC0 character is an integration renderer; the paper's Unity character is not distributed.
 
 `python scripts/verify.py` trains a tiny randomly initialized BERT checkpoint to check pipeline wiring; its predictions are not accuracy evidence. Use reviewed scene-specific training and held-out validation data before relying on model output. The wearable MR agent paper is the framework lineage for this work, not a runtime dependency of this standalone repository.
 

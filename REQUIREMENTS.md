@@ -28,3 +28,7 @@ This project reimplements the paper's learning and behavior boundary with curren
 ## Bundled fictional avatar substitution
 
 Two newly generated fictional CC0 humanoids replace the original avatar assets in the browser demo. They provide a 53-bone rig and named ARKit/viseme targets. Motion retargeting adapts source joints to their bind pose; speaking envelopes approximate mouth motion rather than phoneme alignment. The optional recorded BEAT companion inspects public motion, face and audio files prepared locally, independently of the paper's learned algorithm. No dataset recordings or trained weights are bundled.
+
+## Local recorded co-speech integration
+
+The browser application retrieves prepared BEAT body-motion clips with `automatic` mode: a current public-demo adapter; it is not a method claimed by the intent/action paper. The first `python scripts/start_demo.py` run fetches a small official BVH/TextGrid sample, constructs a nine-clip bank, and fits the local retrieval artifact under ignored `outputs/beat-library/`. Install `scripts/requirements-demo.txt` first. Preparation code and method dependencies are vendored in this repository; no sibling clone, original institute library, full dataset, or pretrained weights are bundled. The intent/entity interpretation and affordance-checked action dispatch remain this application's core; action/navigation poses are separate. The separate recorded-motion companion remains available for local motion/face/audio inspection.
