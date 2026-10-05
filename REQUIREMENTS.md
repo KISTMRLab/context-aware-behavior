@@ -14,7 +14,7 @@ This project reimplements the paper's learning and behaviour boundary with curre
 ## Data boundaries
 
 - The paper's 1,200-sentence controlled-room dataset is unavailable and is neither reconstructed nor claimed.
-- The bundled starter dataset (410 sentences, CC0 1.0) was written and label-checked for this repository. Its validation accuracy is informational, not a reproduction of the paper's results.
+- The bundled starter dataset (425 sentences, CC0 1.0) was written and label-checked for this repository. Its validation accuracy is informational, not a reproduction of the paper's results.
 - Labels describe the deployment scene. Extend the data with reviewed sentences for your own objects, and keep the Table 1 classes or update the ontology deliberately.
 
 ## Acceptance checks

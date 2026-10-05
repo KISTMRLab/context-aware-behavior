@@ -48,6 +48,8 @@ ACTIONS: dict[tuple[str, str, str], list[str]] = {
     ("Walk", "Right", N): ["Walk to the right", "Move right", "Step to the right", "Go a little to the right",
                            "Could you move over to the right?"],
     ("Walk", "Left", "Bed"): ["Go to the left side of the bed", "Walk around to the left of the bed"],
+    ("Walk", "Right", "Bed"): ["Go to the right side of the bed", "Walk around to the right of the bed",
+                               "Stand on the right side of the bed"],
     ("Walk", "Right", "Chair"): ["Stand on the right side of the chair", "Go to the right of the chair"],
     # ---- Run -------------------------------------------------------------------------------
     ("Run", N, N): ["Run", "Run around the room", "Jog in place for a bit", "Can you run?", "Start running",
@@ -95,6 +97,12 @@ ACTIONS: dict[tuple[str, str, str], list[str]] = {
                            "Could you sit on the bed?", "Go and sit on the bed"],
     ("Sit", "On", "Floor"): ["Sit on the floor", "Sit down on the ground", "Please sit on the floor",
                              "Take a seat on the floor", "Could you sit on the ground?"],
+    # Requests the room cannot satisfy are still labelled as asked; the planner rejects them by affordance.
+    ("Sit", "In", "Drawer"): ["Sit inside the drawer", "Go sit in the dresser", "Could you sit in the drawer?",
+                              "Take a seat inside the drawers"],
+    ("Sit", "On", "Drawer"): ["Sit on the drawer", "Have a seat on top of the dresser"],
+    ("Sit", "On", "Lamp"): ["Sit on the lamp"],
+    ("Sit", "In", "Window"): ["Sit in the window"],
     # ---- Stand up --------------------------------------------------------------------------
     ("Stand up", N, N): ["Stand up", "Please stand up", "Get up", "Could you stand up?", "Stand", "Rise",
                          "Get up please", "Time to get up", "On your feet please", "Up you get"],
@@ -126,6 +134,8 @@ ACTIONS: dict[tuple[str, str, str], list[str]] = {
                            "Stretch out on the bed", "Lie down on the mattress", "Go to bed and lie down on it"],
     ("Lay", "On", "Floor"): ["Lie on the floor", "Lay down on the floor", "Please lie on the ground",
                              "Could you lie down on the floor?"],
+    ("Lay", "In", "Drawer"): ["Lie in the drawer", "Lie down inside the dresser"],
+    ("Lay", "On", "Chair"): ["Lie on the chair", "Lay down on the chair"],
     # ---- Idle ------------------------------------------------------------------------------
     ("Idle", N, N): ["Relax", "Just relax", "Wait there", "Stay where you are", "Stay put", "Do nothing for a while",
                      "Chill for a moment", "Hold still", "Wait a moment please", "Just stay there and rest",

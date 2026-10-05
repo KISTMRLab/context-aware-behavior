@@ -4,49 +4,49 @@
   "license": "CC0 1.0 Universal (public-domain dedication) for the authored sentences and labels",
   "labels": "Table 1 classes: Subject, Action, Position, Target (src/context_behavior/resources/ontology.json)",
   "split": "Per label combination, every fifth sentence (index 2, 7, ...) of groups with at least four sentences goes to validation",
-  "train_examples": 345,
-  "val_examples": 65,
+  "train_examples": 359,
+  "val_examples": 66,
   "class_counts": {
     "subject": {
       "None": 100,
-      "Virtual Human": 310
+      "Virtual Human": 325
     },
     "action": {
       "Bring": 23,
       "Close": 24,
       "Hold": 18,
       "Idle": 12,
-      "Lay": 20,
+      "Lay": 24,
       "None": 100,
       "Open": 28,
       "Put": 36,
       "Run": 19,
-      "Sit": 30,
+      "Sit": 38,
       "Stand up": 17,
       "Turn off": 19,
       "Turn on": 19,
-      "Walk": 45
+      "Walk": 48
     },
     "position": {
-      "In": 8,
+      "In": 15,
       "Left": 20,
       "None": 279,
-      "On": 51,
-      "Right": 18,
+      "On": 56,
+      "Right": 21,
       "To": 34
     },
     "target": {
-      "Bed": 37,
-      "Chair": 29,
+      "Bed": 40,
+      "Chair": 31,
       "Curtain": 17,
-      "Drawer": 31,
+      "Drawer": 39,
       "Floor": 14,
-      "Lamp": 27,
+      "Lamp": 28,
       "None": 166,
       "Object": 22,
       "Pillow": 25,
       "Switch": 15,
-      "Window": 27
+      "Window": 28
     }
   },
   "classes_without_examples": {

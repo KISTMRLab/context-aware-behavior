@@ -115,6 +115,9 @@
 {"text": "Could you move over to the right?", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "None"}
 {"text": "Go to the left side of the bed", "subject": "Virtual Human", "action": "Walk", "position": "Left", "target": "Bed"}
 {"text": "Walk around to the left of the bed", "subject": "Virtual Human", "action": "Walk", "position": "Left", "target": "Bed"}
+{"text": "Go to the right side of the bed", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "Bed"}
+{"text": "Walk around to the right of the bed", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "Bed"}
+{"text": "Stand on the right side of the bed", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "Bed"}
 {"text": "Stand on the right side of the chair", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "Chair"}
 {"text": "Go to the right of the chair", "subject": "Virtual Human", "action": "Walk", "position": "Right", "target": "Chair"}
 {"text": "Run", "subject": "Virtual Human", "action": "Run", "position": "None", "target": "None"}
@@ -203,6 +206,13 @@
 {"text": "Sit down on the ground", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Floor"}
 {"text": "Take a seat on the floor", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Floor"}
 {"text": "Could you sit on the ground?", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Floor"}
+{"text": "Sit inside the drawer", "subject": "Virtual Human", "action": "Sit", "position": "In", "target": "Drawer"}
+{"text": "Go sit in the dresser", "subject": "Virtual Human", "action": "Sit", "position": "In", "target": "Drawer"}
+{"text": "Take a seat inside the drawers", "subject": "Virtual Human", "action": "Sit", "position": "In", "target": "Drawer"}
+{"text": "Sit on the drawer", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Drawer"}
+{"text": "Have a seat on top of the dresser", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Drawer"}
+{"text": "Sit on the lamp", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Lamp"}
+{"text": "Sit in the window", "subject": "Virtual Human", "action": "Sit", "position": "In", "target": "Window"}
 {"text": "Stand up", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
 {"text": "Please stand up", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
 {"text": "Could you stand up?", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
@@ -266,6 +276,10 @@
 {"text": "Lie on the floor", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Floor"}
 {"text": "Lay down on the floor", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Floor"}
 {"text": "Could you lie down on the floor?", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Floor"}
+{"text": "Lie in the drawer", "subject": "Virtual Human", "action": "Lay", "position": "In", "target": "Drawer"}
+{"text": "Lie down inside the dresser", "subject": "Virtual Human", "action": "Lay", "position": "In", "target": "Drawer"}
+{"text": "Lie on the chair", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Chair"}
+{"text": "Lay down on the chair", "subject": "Virtual Human", "action": "Lay", "position": "On", "target": "Chair"}
 {"text": "Relax", "subject": "Virtual Human", "action": "Idle", "position": "None", "target": "None"}
 {"text": "Just relax", "subject": "Virtual Human", "action": "Idle", "position": "None", "target": "None"}
 {"text": "Stay where you are", "subject": "Virtual Human", "action": "Idle", "position": "None", "target": "None"}

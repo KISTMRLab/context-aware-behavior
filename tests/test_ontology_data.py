@@ -69,5 +69,9 @@ def test_starter_dataset_covers_every_class_without_leakage():
     texts = {r.text: r for r in train + val}
     assert texts["Don't open the window"].subject == "None"
     assert texts["Switch on the lamp"].action == texts["Turn on the lamp"].action == "Turn on"
+    # Requests the room cannot satisfy are labelled as asked so the planner, not the classifier, rejects them.
+    sit_drawer = [r for r in train if (r.action, r.position, r.target) == ("Sit", "In", "Drawer")]
+    assert len(sit_drawer) >= 2 and "Sit in the drawer" not in texts  # the demo chip itself stays out of the data
+    assert any((r.action, r.position, r.target) == ("Walk", "Right", "Bed") for r in train)
     provenance = json.loads((STARTER / "provenance.json").read_text())
     assert "CC0" in provenance["license"] and provenance["train_examples"] == len(train)

@@ -39,6 +39,7 @@
 {"text": "Sit on the stool", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Chair"}
 {"text": "Sit down on the edge of the bed", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Bed"}
 {"text": "Please sit on the floor", "subject": "Virtual Human", "action": "Sit", "position": "On", "target": "Floor"}
+{"text": "Could you sit in the drawer?", "subject": "Virtual Human", "action": "Sit", "position": "In", "target": "Drawer"}
 {"text": "Get up", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
 {"text": "Time to get up", "subject": "Virtual Human", "action": "Stand up", "position": "None", "target": "None"}
 {"text": "Switch on the lamp", "subject": "Virtual Human", "action": "Turn on", "position": "None", "target": "Lamp"}

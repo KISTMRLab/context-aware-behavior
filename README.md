@@ -106,7 +106,7 @@ In the room, each reply shows the four predicted classes. For action requests it
 
 ### Starter dataset
 
-[`resources/starter/`](src/context_behavior/resources/starter/) contains 410 sentences written and label-checked for this repository: 345 for training and 65 for validation. They cover every Table 1 class, plus small talk, questions about the room and negated requests. Negated requests are labelled as conversation, so no action is taken. [`provenance.json`](src/context_behavior/resources/starter/provenance.json) records origin, licence (CC0 1.0), split rule and class counts. Rebuild the files with `python scripts/build_starter_dataset.py` after editing the sentence lists.
+[`resources/starter/`](src/context_behavior/resources/starter/) contains 425 sentences written and label-checked for this repository: 359 for training and 66 for validation. They cover every Table 1 class, plus small talk, questions about the room and negated requests. Negated requests are labelled as conversation, so no action is taken. [`provenance.json`](src/context_behavior/resources/starter/provenance.json) records origin, licence (CC0 1.0), split rule and class counts. Rebuild the files with `python scripts/build_starter_dataset.py` after editing the sentence lists.
 
 This is not the paper's dataset. Accuracy on its small validation split only shows that the pipeline learns; it is not a benchmark. Extend it with sentences reviewed for your own scene and keep paraphrases of one template within a single split.
 

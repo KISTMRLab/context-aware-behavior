@@ -29,6 +29,8 @@ def classes(text):
     ("I'm cold, close the window", ("Virtual Human", "Close", "None", "Window")),
     ("I need something from the drawer, open it", ("Virtual Human", "Open", "None", "Drawer")),
     ("Stand up", ("Virtual Human", "Stand up", "None", "None")),
+    ("Sit in the drawer", ("Virtual Human", "Sit", "In", "Drawer")),
+    ("Walk to the right side of the bed", ("Virtual Human", "Walk", "Right", "Bed")),
 ])
 def test_rule_fallback_audit_inputs(text, expected):
     assert classes(text) == expected
@@ -42,6 +44,12 @@ def test_audit_failures_now_ground_correctly():
     assert lie.accepted and lie.command["behavior"] == "lie_on"
     put = BehaviorPlanner(SCENE).plan(RULES.predict("Put the pillow on the bed"))
     assert put.accepted and next(s for s in put.steps if s["op"] == "place")["object"] == "pillow"
+
+
+def test_sit_in_drawer_sample_is_rejected_by_affordance():
+    # Live-verification regression: the sample chip must reach the planner's affordance check as Sit/In/Drawer.
+    plan = BehaviorPlanner(SCENE).plan(RULES.predict("Sit in the drawer"))
+    assert not plan.accepted and "does not support 'Sit'" in plan.reason
 
 
 def test_parse_rules_compatibility_helper():
