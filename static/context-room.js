@@ -3,10 +3,10 @@
 // Renderer features (lookAt, reachTo, sit, lie, stand, setFacing, setExpression)
 // are feature-checked so an older vendored avatar.js still runs the walk/state path.
 import * as THREE from '/static/vendor/three.module.js';
-import {createStage} from '/static/avatar.js?v=20261005-beat2';
-import {Speech} from '/static/speech.js?v=20261005-beat2';
+import {createStage} from '/static/avatar.js?v=20261006-paper1';
+import {Speech} from '/static/speech.js?v=20261006-paper1';
 import {setupVoiceInput} from '/static/voice-input.js';
-import {prepareApplicationMotion, gestureSummary} from '/static/application-gesture.js?v=20261005-beat2';
+import {prepareApplicationMotion, gestureSummary} from '/static/application-gesture.js?v=20261006-paper1';
 
 const $ = selector => document.querySelector(selector);
 const stage = createStage($('#room'));
