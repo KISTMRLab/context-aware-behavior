@@ -11,3 +11,5 @@ dist/
 static/vendor/
 
 data/
+
+models/

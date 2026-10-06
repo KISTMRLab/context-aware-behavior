@@ -26,6 +26,7 @@ parser.add_argument('--dialogue-url')
 parser.add_argument('--dialogue-model')
 parser.add_argument('--dialogue-command')
 parser.add_argument('--skip-paper-method', action='store_true', help='Do not run scripts/prepare_paper_method.py; serve the BEAT demo adapter')
+parser.add_argument('--offline', action='store_true', help='Do not download the small default text model (all-MiniLM-L6-v2); use local files only')
 args = parser.parse_args()
 os.chdir(ROOT)
 os.environ['PYTHONPATH'] = str(ROOT / 'src') + os.pathsep + os.environ.get('PYTHONPATH', '')
@@ -37,6 +38,10 @@ if prepare.exists() and not all((ROOT / 'static' / 'vendor' / name).is_file() fo
 # BEAT preparation and the optional paper-method hook are non-fatal: on failure
 # the server still starts with the existing local cache or the authored starter.
 paper_args = None
+# First run: download the small default text model (all-MiniLM-L6-v2, about 92 MB) into ignored
+# models/; reused when present, skipped by --offline, PAPERREACH_OFFLINE=1 or a BEAT_SBERT_MODEL/SBERT_MODEL
+# override. A failed download is reported and the demo continues with its labelled text fallback.
+subprocess.run([sys.executable, str(ROOT/'scripts/beat_demo/fetch_models.py'), *(['--offline'] if args.offline else [])])
 if not args.skip_beat:
     prepared = subprocess.run([sys.executable, str(ROOT/'scripts/prepare_beat_demo.py')])
     if prepared.returncode:
